@@ -2787,7 +2787,10 @@ for(const el of $('insMusic').querySelector('.insbody').children){const title=el
  .timeline .status{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
  #mbottom{order:3;flex:1 1 0;min-height:0;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;background:var(--panel,#202a36)}
  #mbottom>#library{height:auto!important;min-height:100%;overflow:visible!important;padding-top:0}
- #mbottom>#inspector{display:block!important;width:auto!important;height:auto!important;max-height:none!important;overflow:visible!important;border-top:1px solid var(--line,#394756)}
+ /* proje ayrıntıları telefonda gizli; klip/yazı seçilince ilgili ayarlar görünür */
+ #mbottom #insProject{display:none!important}
+ #mbottom>#inspector:not(:has(>[id^=ins]:not(#insProject):not([hidden]))){display:none!important}
+ #mbottom>#inspector{display:block;width:auto!important;height:auto!important;max-height:none!important;overflow:visible!important;border-top:1px solid var(--line,#394756)}
  #dock{position:sticky;top:0;z-index:6;overflow-x:auto!important;flex-wrap:nowrap!important;background:var(--panel,#202a36)}
  #dock button{min-width:58px;min-height:50px;flex:none}
  #library .bar button,#inspector button{min-height:40px}
@@ -2847,7 +2850,9 @@ if(touch){
   if(p.length){m.peaks=norm(p);refreshStrips()}};
  /* Yükleme sırasında ekran kilitlenmiş gibi görünmesin */
  const prevImport=importFiles;
- importFiles=async function(files){const list=[...(files||[])];if(list.length)status(list.length+' video hazırlanıyor… (büyük videolar biraz sürebilir)');await new Promise(r=>setTimeout(r,50));return prevImport(list)};
+ /* önceki işlem sürerken seçilen videolar kaybolmasın: sıraya alınır */
+ let importChain=Promise.resolve();
+ importFiles=function(files){const list=[...(files||[])];if(list.length)status(list.length+' video alınıyor…');importChain=importChain.then(async()=>{let w=0;while((busy||rendering)&&w++<600)await new Promise(r=>setTimeout(r,250));await new Promise(r=>setTimeout(r,30));return prevImport(list)}).catch(e=>status('Video alınamadı: '+(e?.message||e)));return importChain};
 
  /* -- Zaman çizelgesinde basılı tutup sürükleyerek klip taşıma (dokunmatik) -- */
  let hold=null,blockScroll=false;
